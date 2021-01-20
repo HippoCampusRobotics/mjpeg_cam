@@ -10,6 +10,7 @@ find_package(catkin REQUIRED
              roscpp
              sensor_msgs
              dynamic_reconfigure
+             camera_info_manager
              )
 
 ###################################
@@ -34,6 +35,7 @@ catkin_package(
         CATKIN_DEPENDS
         sensor_msgs
         dynamic_reconfigure
+        camera_info_manager
         #  DEPENDS
 )
 

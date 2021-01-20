@@ -9,6 +9,7 @@
 #include <std_srvs/Trigger.h>
 #include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <camera_info_manager/camera_info_manager.h>
 
 
 namespace mjpeg_cam
@@ -84,6 +85,8 @@ private:
     int white_balance;
     std::string camera_name;
     std::string base_topic;
+    std::shared_ptr<camera_info_manager::CameraInfoManager> info_manager_;
+    std::string camera_info_url_;
 };
 
 } /* namespace */

@@ -1,5 +1,6 @@
 #include "mjpeg_cam/MjpegCam.hpp"
 
+
 namespace mjpeg_cam
 {
 
@@ -17,9 +18,13 @@ MjpegCam::MjpegCam(ros::NodeHandle &nodeHandle)
 {
     readParameters();
     imagePub_ = nodeHandle_.advertise<sensor_msgs::CompressedImage>(base_topic+"/compressed", 1);
-    infoPub_ = nodeHandle_.advertise<sensor_msgs::CameraInfo>("fake_camera_info", 60);
+    infoPub_ = nodeHandle_.advertise<sensor_msgs::CameraInfo>("camera_info", 60);
 
     cam = new UsbCamera(device_name, width, height);
+
+    info_manager_.reset(new camera_info_manager::CameraInfoManager(
+        nodeHandle_, camera_name, camera_info_url_
+    ));
 
     try {
         setCameraParams();
@@ -42,20 +47,18 @@ bool MjpegCam::readAndPublishImage()
         int length;
         char *image = cam->grab_image(length);
         sensor_msgs::CompressedImage msg;
-        sensor_msgs::CameraInfo info_msg;
+        sensor_msgs::CameraInfoPtr info_msg(new sensor_msgs::CameraInfo(info_manager_->getCameraInfo()));
         msg.header.frame_id = camera_name;
         msg.header.seq = sequence++;
         msg.header.stamp = ros::Time::now();
         msg.format = "jpeg";
         msg.data.resize(length);
         std::copy(image, image + length, msg.data.begin());
-        info_msg.header.frame_id = msg.header.frame_id;
-        info_msg.header.seq = msg.header.seq;
-        info_msg.header.stamp = msg.header.stamp;
-        info_msg.width = width;
-        info_msg.height = height;
+        info_msg->header.frame_id = msg.header.frame_id;
+        info_msg->header.seq = msg.header.seq;
+        info_msg->header.stamp = msg.header.stamp;
         imagePub_.publish(msg);
-        infoPub_.publish(info_msg);
+        infoPub_.publish(*info_msg);
         //std::cout << "Image size in kB: " << length/1000 << std::endl;
 
         return true;
@@ -86,6 +89,7 @@ void MjpegCam::readParameters()
     nodeHandle_.param("framerate", framerate, 30);
     nodeHandle_.param("camera_name", camera_name, std::string("mjpeg_camera"));
     nodeHandle_.param("base_topic", base_topic, std::string("image_raw"));
+    nodeHandle_.param("camera_info_url", camera_info_url_, std::string(""));
 
     nodeHandle_.param("exposure", exposure, 128);
     nodeHandle_.param("autoexposure", autoexposure, true);
