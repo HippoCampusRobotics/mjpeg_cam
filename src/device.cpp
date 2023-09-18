@@ -289,6 +289,7 @@ Control Device::GetControl(unsigned int id, bool &status) {
   control.step = query.step;
   control.disabled = (query.flags & V4L2_CTRL_FLAG_DISABLED) != 0;
   control.menu_items = std::move(menu_items);
+  control.inactive = (query.flags & V4L2_CTRL_FLAG_INACTIVE) != 0;
   control.value = ControlValue(control.id);
   status = true;
   return control;
@@ -307,10 +308,12 @@ bool Device::SetControlValue(unsigned int id, int value) {
   auto control = v4l2_control{};
   control.id = id;
   control.value = value;
+  bool status{false};
 
   if (xioctl(file_descriptor_, VIDIOC_S_CTRL, &control) == -1) {
     return false;
   }
-  return true;
+  auto current_control = GetControl(id, status);
+  return control.value == current_control.value;
 }
 }  // namespace mjpeg_cam

@@ -4,14 +4,13 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <thread>
 
 #include "mjpeg_cam/device.hpp"
 
 namespace mjpeg_cam {
-namespace camera_controls {
-static constexpr char kAutoExposure[] = "auto_exposure";
-}
+
 class MjpegCam : public rclcpp::Node {
  public:
   explicit MjpegCam(const rclcpp::NodeOptions &_options);
@@ -30,16 +29,20 @@ class MjpegCam : public rclcpp::Node {
   }
   void InitParams();
   void InitCameraParams();
-  // void InitPublishers();
+  void InitPublishers();
   // void InitSubscriptions();
+  void InitServices();
   void LogAvailableFormats();
   void LogAvailableFrameSizes();
   void InitFrameSizes();
+  bool SetControlDefaults();
 
   rcl_interfaces::msg::SetParametersResult SetCameraControls(
       const std::vector<rclcpp::Parameter> &parameters);
   rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr image_pub_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_;
+
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr set_defaults_service_;
 
   std::unordered_map<std::string, int> control_name_to_id_map_;
 

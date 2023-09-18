@@ -9,6 +9,8 @@ MjpegCam::MjpegCam(const rclcpp::NodeOptions &_options)
     info_pub_ =
         create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 10);
   }
+  InitPublishers();
+  InitServices();
   InitParams();
   InitFrameSizes();
   auto frame_size = frame_sizes_.at(std::clamp<std::size_t>(
@@ -22,15 +24,49 @@ MjpegCam::MjpegCam(const rclcpp::NodeOptions &_options)
 
   capture_thread_ = std::thread{[this]() -> void {
     while (rclcpp::ok()) {
+      sensor_msgs::msg::CameraInfo camera_info;
       auto img = camera_->Capture();
       if (img == nullptr) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         continue;
       }
       img->header.stamp = now();
+      camera_info.header = img->header;
+      camera_info.width = camera_->GetWidth();
+      camera_info.height = camera_->GetHeight();
       image_pub_->publish(std::move(img));
+      info_pub_->publish(camera_info);
     }
   }};
+}
+
+void MjpegCam::InitPublishers() {
+  std::string topic;
+  rclcpp::SensorDataQoS qos{};
+  qos.keep_last(1);
+
+  topic = "image_raw/compressed";
+  image_pub_ = create_publisher<sensor_msgs::msg::CompressedImage>(topic, qos);
+
+  topic = "camera_info";
+  info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>(topic, qos);
+}
+
+void MjpegCam::InitServices() {
+  std::string name;
+
+  name = "~/set_defaults";
+  set_defaults_service_ = create_service<std_srvs::srv::Trigger>(
+      name,
+      [this]([[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr
+                 request,
+             std_srvs::srv::Trigger::Response::SharedPtr response) {
+        response->success = SetControlDefaults();
+        if (!response->success) {
+          response->message = "At least one control could not be set";
+        }
+        return response;
+      });
 }
 
 void MjpegCam::InitFrameSizes() {
@@ -63,6 +99,22 @@ void MjpegCam::LogAvailableFrameSizes() {
     ++i;
   }
   RCLCPP_INFO_STREAM(get_logger(), text);
+}
+
+bool MjpegCam::SetControlDefaults() {
+  if (!camera_) {
+    RCLCPP_WARN(get_logger(),
+                "Camera not initialized. Cannot set control defaults");
+    return false;
+  }
+  bool success{true};
+  for (auto const &control : camera_->Controls()) {
+    if (!camera_->SetControlValue(control.id, control.default_value)) {
+      RCLCPP_INFO(get_logger(), "Failed to set default [%s] = %d",
+                   control.name.c_str(), control.default_value);
+    }
+  }
+  return success;
 }
 
 }  // namespace mjpeg_cam

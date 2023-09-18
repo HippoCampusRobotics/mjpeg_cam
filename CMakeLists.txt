@@ -18,6 +18,7 @@ find_package(rclcpp_components REQUIRED)
 find_package(hippo_msgs REQUIRED)
 find_package(hippo_common REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
 include_directories(
   include
@@ -67,6 +68,7 @@ ament_target_dependencies(${component_name}
   hippo_common
   hippo_msgs
   sensor_msgs
+  std_srvs
 )
 rclcpp_components_register_node(${component_name} PLUGIN "mjpeg_cam::MjpegCam" EXECUTABLE ${component_name}_node)
 install(TARGETS ${component_name}

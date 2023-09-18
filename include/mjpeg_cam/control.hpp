@@ -4,6 +4,7 @@
 
 namespace mjpeg_cam {
 enum class ControlType { kInt = 1, kBool, kMenu, kUnknown };
+
 struct Control {
   unsigned int id;
   std::string name;
@@ -13,6 +14,7 @@ struct Control {
   int max;
   int step;
   bool disabled;
+  bool inactive;
   int default_value;
   int value;
 };
