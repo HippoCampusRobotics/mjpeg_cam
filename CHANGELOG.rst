@@ -2,8 +2,8 @@
 Changelog for package mjpeg_cam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.0 (2024-07-16)
+------------------
 * moved to separate repo
 * streamlined ov9281 launch
 * ditched yapf
