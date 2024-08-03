@@ -2,8 +2,8 @@
 Changelog for package mjpeg_cam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.1 (2024-08-03)
+------------------
 * added README
 * Contributors: Thies Lennart Alff
 
